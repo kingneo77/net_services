@@ -2,7 +2,7 @@
 # RTEMS Project (https://www.rtems.org/)
 #
 # Copyright (c) 2021 Regents of University of Colorado
-# Written by Vijay Kumar Banerjee <vijay@rtems.org>.
+# Written by Harrison Edward Gerber <hgerber@uccs.edu>.
 # All rights reserved.
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -30,27 +30,21 @@ from rtems_waf import rtems
 import bsp_drivers
 import os
 
-source_files = []
-include_files = {}
+def get_files(bld):
+    net_files = {'tftpfs': {},
+                 'telnetd': {}}
+    for key, value in net_files.items():
+        value.update({'sources': []})
+        value.update({'includes': []})
 
-def find_node(bld, *paths):
-    path = os.path.join(*paths)
-    return os.path.relpath(str(bld.path.find_node(path)))
+    for key, value in net_files.items():
+        for root, dirs, files in os.walk(os.path.join('net_services', key)):
+            for name in files:
+                ext = os.path.splitext(name)[1]
+                if ext == '.c':
+                    value['sources'].append(os.path.join(root, name))
+                if ext == '.h':
+                    value['includes'].append(root)
 
-def install_file_list(*paths):
-    path = os.path.join(*paths)
-    file_list = [os.path.join(path, f) for f in os.listdir(path)]
-    return file_list
+    return net_files
 
-def build(bld):
-	include_path = []
-
-	for root, dirs, files in os.walk("."):
-	    dirs.append(os.path.join('telnetd'))
-	    include_files[root[2:]] = []
-	    for name in files:
-	        ext = os.path.splitext(name)[1]
-	        if ext == '.c':
-	            source_files.append(os.path.join(root, name))
-	        if ext == '.h':
-	            include_files[root[2:]].append(os.path.join(root, name))
